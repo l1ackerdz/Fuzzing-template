@@ -1,0 +1,22 @@
+id: rails-debug-foo
+
+info:
+  name: Rails Debug Page on /foo
+  author: yourname
+  severity: medium
+  description: Detects Ruby on Rails debug error pages by requesting /foo on the base domain.
+  tags: rails,debug,error
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/foo"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "Action Controller: Exception caught"
+          - "ErrorException"
+          - "handleError()"
+     
