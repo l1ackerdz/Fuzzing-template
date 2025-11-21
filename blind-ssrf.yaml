@@ -1,0 +1,33 @@
+id: blind-ssrf-ultra-simple
+
+info:
+  name: Ultra Simple Blind SSRF Param Fuzzer
+  author: you
+  severity: medium
+  tags: ssrf,oast,dast
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'
+
+    payloads:
+      ssrf:
+        - "{{interactsh-url}}"
+
+    fuzzing:
+      - part: query
+        mode: single
+
+        # New replaced value
+        fuzz:
+          - "https://{{ssrf}}"
+
+    stop-at-first-match: false
+
+    matchers:
+      - type: word
+        part: interactsh_protocol
+        words:
+          - "http"
