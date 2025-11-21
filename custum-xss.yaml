@@ -1,0 +1,53 @@
+id: reflect-xss-generic
+
+info:
+  name: Reflected XSS (Generic Param Fuzzing, Flexible)
+  author: kil3r
+  severity: medium
+  description: Detects reflected XSS payloads in query parameters (auto-detects params, even if wrapped in HTML).
+  tags: xss,rxss,reflection,dast
+
+http:
+  - method: GET
+
+    headers:
+      User-Agent: "Mozilla/5.0 (compatible; Cloudflare-SSR-Scanner/1.0; +https://cloudflare.com)"
+      Cookie: "cf_clearance=realCookieFromBrowser; ak_bmsc=xxxx; ..."
+
+    payloads:
+      reflection:
+        - "testdz:hahahadz"
+        - 'testdz"xxxxxx'
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    stop-at-first-match: false
+
+    matchers-condition: and
+    matchers:
+      # Must be HTML
+      - type: word
+        part: header
+        words:
+          - "text/html"
+
+      # Reflection in body
+      - type: regex
+        part: body
+        regex:
+          - '\btestdz"xxxxxx\b'
+          - '\bTESTDZ"XXXXXX\b'
+          - 'testdz"xxxxxx'
+          - 'HREF="testdz:hahahadz"'
+          - 'HREF="TESTDZ:HAHAHADZ"'
+          - 'href="testdz:hahahadz"'
+          - 'href="TESTDZ:HAHAHADZ"'
+          - "HREF='testdz:hahahadz'"
+          - "HREF='TESTDZ:HAHAHADZ'"
+          - "href='testdz:hahahadz'"
+          - "href='TESTDZ:HAHAHADZ'"
