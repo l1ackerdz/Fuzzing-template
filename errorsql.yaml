@@ -1,0 +1,28 @@
+id: sql-error-detect-status-500
+info:
+  name: SQL Error Detection via 500 Status
+  author: mino
+  severity: medium
+  description: |
+    Detects potential SQL injection by injecting a single quote (') into parameters
+    and checking for a 500 Internal Server Error.
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    payloads:
+      sqli:
+        - "'"
+
+    fuzzing:
+      - part: query
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers:
+      - type: status
+        status:
+          - 500
