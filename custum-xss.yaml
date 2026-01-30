@@ -1,53 +1,59 @@
-id: reflect-xss-generic
+id: reflected-xss-html-only
 
 info:
-  name: Reflected XSS (Generic Param Fuzzing, Flexible)
+  name: Reflected Input in HTML Response (Strict)
   author: kil3r
-  severity: medium
-  description: Detects reflected XSS payloads in query parameters (auto-detects params, even if wrapped in HTML).
-  tags: xss,rxss,reflection,dast
+  severity: info
+  description: Detects strict reflected input inside quoted HTML context
+  tags: xss,reflection,html,dast
+
 
 http:
   - method: GET
 
-    headers:
-      User-Agent: "Mozilla/5.0 (compatible; Cloudflare-SSR-Scanner/1.0; +https://cloudflare.com)"
-      Cookie: "cf_clearance=realCookieFromBrowser; ak_bmsc=xxxx; ..."
-
     payloads:
-      reflection:
-        - "testdz:hahahadz"
-        - 'testdz"xxxxxx'
+      xss:
+        - 'testdz%22xxxxxx'
+        - "testdz%27xxxxxx"
+        - 'testdz%3Ahahahadz'
+        - '%22%3E%3Cxxxxxx'
+        - "%27%3E%3Cxxxxxx"
+        - 'test%22%3E%3Cxx%3Ejhjhj'
+        - "test%27%3E%3Cxx%3Ejhjhj"
+
+        #- 'testdz"xxxxxx'
+        #- "testdz'xxxxxx"
+        #- 'testdz:hahahadz'
+        #- '"><xxxxxx'
+        #- "'><xxxxxx"
+        #- 'test"><xx>jhjhj'
+        #- "test'><xx>jhjhj"
 
     fuzzing:
       - part: query
         type: replace
         mode: single
         fuzz:
-          - "{{reflection}}"
-
-    stop-at-first-match: false
+          - "{{xss}}"
 
     matchers-condition: and
     matchers:
-      # Must be HTML
-      - type: word
-        part: header
-        words:
-          - "text/html"
 
-      # Reflection in body
+      # HTML only
+      - type: regex
+        part: header
+        regex:
+          - '(?im)content-type:\s*text/html'
+
+      # STRICT reflection
       - type: regex
         part: body
         regex:
-          - '\btestdz"xxxxxx\b'
-          - '\bTESTDZ"XXXXXX\b'
-          - 'testdz"xxxxxx'
-          - 'HREF="testdz:hahahadz"'
-          - 'HREF="TESTDZ:HAHAHADZ"'
-          - 'href="testdz:hahahadz"'
-          - 'href="TESTDZ:HAHAHADZ"'
-          - "HREF='testdz:hahahadz'"
-          - "HREF='TESTDZ:HAHAHADZ'"
-          - "href='testdz:hahahadz'"
-          - "href='TESTDZ:HAHAHADZ'"
+          - '(?i)"testdz"xxxxxx"'
+          - "(?i)'testdz'xxxxxx'"
+          - "(?i)href='testdz:hahahadz'"
+          - '(?i)href="testdz:hahahadz"'
+          - '(?i)""><xxxxxx'
+          - "(?i)''><xxxxxx"
+          - '(?i)test"><xx>jhjhj'
+          - "(?i)test'><xx>jhjhj"
