@@ -1,40 +1,51 @@
-id: reflected-xss
+id: reflected-xss-html-only
 
 info:
-  name: Reflected Cross Site Scripting
-  author: pdteam
-  severity: medium
-  tags: xss,rxss,dast
-
-variables:
-  first: "{{rand_int(10000, 99999)}}"
+  name: Reflected Input in HTML Response (Simple)
+  author: kil3r
+  severity: info
+  tags: xss,reflection,html,dast
 
 http:
-  - pre-condition:
-      - type: dsl
-        dsl:
-          - 'method == "GET"'
+  - method: GET
 
     payloads:
-      reflection:
-        - "'\"><{{first}}"
+      xss:
+        - 'testdz%22%20%22xxxxxx'
+        - 'testdz%3Ahahahadz'
+        - 'xxxx%22%3E%3Cxxxxxx'
+        - "xxxx%27%3E%3Cxxxxxx"
+        - 'test%22%3E%3Cxx%3Ejhjhj'
+        - "test%27%3E%3Cxx%3Ejhjhj"
+        - 'testdz%27%22%20%27%22fefe'
+
+    attack: batteringram
 
     fuzzing:
       - part: query
-        type: postfix
+        type: replace
         mode: single
         fuzz:
-          - "{{reflection}}"
+          - "{{xss}}"
 
-    stop-at-first-match: true
-    matchers-condition: and
+    matchers-condition: or
     matchers:
       - type: word
         part: body
         words:
-          - "{{reflection}}"
-
-      - type: word
-        part: header
-        words:
-          - "text/html"
+          - 'testdz" "xxxxxx'
+          - "testdz'xxxxxx"
+          - "href=testdz:hahahadz"
+          - 'xxxx"><xxxxxx'
+          - "xxxx'><xxxxxx"
+          - 'test"><xx>jhjhj'
+          - "test'><xx>jhjhj"
+          - "testdz'\" '\"fefe"
+          - 'TESTDZ" "XXXXXX'
+          - "TESTDZ'XXXXXX"
+          - "href=TESTDZ:HAHAHADZ"
+          - 'XXXX"><XXXXXX'
+          - "XXXX'><XXXXXX"
+          - 'TEST"><XX>JHJHJ'
+          - "TEST'><XX>JHJHJ"
+          - "TESTDZ'\" '\"FEFE"
